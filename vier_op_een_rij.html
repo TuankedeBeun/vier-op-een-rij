@@ -27,6 +27,7 @@
 </style>
 <script>
     var table_elements
+    var columns = [0,0,0,0,0,0,0]
     function get_table(){
         table_elements = document.getElementsByTagName('td')
         for(i=0; i<42; i++){
@@ -35,29 +36,49 @@
             var cell = table_elements[i]
             cell.row = row
             cell.column = column
-            cell.onmouseover = hovering
-            cell.onclick = clicking
+            cell.full = false
+            cell.onmouseenter = hovering_enter
+            cell.onmouseleave = hovering_leave
+            cell.onclick = dropping_stone
         }
         console.log(table_elements)
     }
-    function hovering(){
-        console.log(this.row + "," + this.column)
+    function get_cell(row, col){
+        const nr = row*7 + col
+        return table_elements[nr]
+    }
+    function hovering_enter(){
         for(i=0; i<42; i++){
             cell = table_elements[i]
-            if(cell.column == this.column){
+            if(!cell.full && cell.column == this.column){
                 cell.style.background = "lightcyan"
-            }else{
-                cell.style.background = "none"
             }
         }
     }
-    function clicking(){
-        "pass"
+    function hovering_leave(){
+        for(i=0; i<42; i++){
+            cell = table_elements[i]
+            if(!cell.full){
+                cell = table_elements[i]
+                if(!cell.full && cell.column == this.column){
+                    cell.style.background = "none"
+                }
+            }
+        }
+    }
+    function dropping_stone(){
+        console.log(this.row + "," + this.column)
+        const empty_row = 5 - columns[this.column]
+        if(empty_row != -1){
+            var cell = get_cell(empty_row, this.column)
+            cell.style.background = "yellow"
+            cell.full = true
+            columns[this.column] += 1
+        }
     }
     function dummy_function(){
         alert("alert mate")
     }
-    get_table()
 </script>
 <body>
     <table>
@@ -70,4 +91,5 @@
     </table>
     <button onclick="dummy_function()">klik</button>
 </body>
+<script>get_table()</script>
 </html>
