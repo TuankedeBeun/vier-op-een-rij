@@ -21,18 +21,53 @@
         height: 50px;
         width: 75px;
     }
+    td:hover {
+        background-color: lightcyan;
+    }
 </style>
 <script>
-
+    var table_elements
+    function get_table(){
+        table_elements = document.getElementsByTagName('td')
+        for(i=0; i<42; i++){
+            var row = Math.trunc(i/7)
+            var column = i % 7
+            var cell = table_elements[i]
+            cell.row = row
+            cell.column = column
+            cell.onmouseover = hovering
+            cell.onclick = clicking
+        }
+        console.log(table_elements)
+    }
+    function hovering(){
+        console.log(this.row + "," + this.column)
+        for(i=0; i<42; i++){
+            cell = table_elements[i]
+            if(cell.column == this.column){
+                cell.style.background = "lightcyan"
+            }else{
+                cell.style.background = "none"
+            }
+        }
+    }
+    function clicking(){
+        "pass"
+    }
+    function dummy_function(){
+        alert("alert mate")
+    }
+    get_table()
 </script>
 <body>
     <table>
-        <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-        <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-        <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-        <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-        <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-        <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr><td>a</td><td>a</td><td>a</td><td>a</td><td>a</td><td>a</td><td>a</td></tr>
+        <tr><td>a</td><td>a</td><td>a</td><td>a</td><td>a</td><td>a</td><td>a</td></tr>
+        <tr><td>a</td><td>a</td><td>a</td><td>a</td><td>a</td><td>a</td><td>a</td></tr>
+        <tr><td>a</td><td>a</td><td>a</td><td>a</td><td>a</td><td>a</td><td>a</td></tr>
+        <tr><td>a</td><td>a</td><td>a</td><td>a</td><td>a</td><td>a</td><td>a</td></tr>
+        <tr><td>a</td><td>a</td><td>a</td><td>a</td><td>a</td><td>a</td><td>a</td></tr>
     </table>
+    <button onclick="dummy_function()">klik</button>
 </body>
 </html>
