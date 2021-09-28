@@ -8,27 +8,113 @@
 </head>
 <style>
     body{
-        background-color: lightskyblue;
+        background-color: powderblue;
+        color:black;
+        padding: 30px;
     }
     table{
         border: none;
-        background-color: lightskyblue;
         border-spacing: 5px;
-        
     }
     td{
-        border: 2px solid maroon;
+        border: 2px solid saddlebrown;
         height: 50px;
         width: 75px;
     }
     td:hover {
         background-color: lightcyan;
     }
+    .container {
+        width: 60%;
+        height: 600px;
+        border: 4px solid saddlebrown;
+        border-radius: 2em;
+        padding: 10px;
+        text-align: center;
+    }
+    .left_column{
+        float: left;
+    }
+    .right_column{
+        float: right;
+    }
+    .flex{
+        display: flex;
+        flex-wrap: wrap;
+    }
+    h3{
+        font-size: xx-large;
+    }
+    h5{
+        font-size: x-large;
+    }
+    h6{
+        font-size: large;
+    }
+    input{
+        height:50px;
+        width:250px;
+        font-size: large;
+    }
+    button{
+        margin:10px;
+        width:150px;
+        height:60px;
+        font-size: large;
+        font-weight: bold;
+        border-radius: 1em;
+        border: 3px solid black;
+    }
+    .startbutton{
+        background-color: salmon;
+        width: 250px;
+    }
 </style>
 <script>
     var table_elements
     var columns = [0,0,0,0,0,0,0]
+    const colors = ['SlateBlue','SeaGreen','LemonChiffon','LightSalmon','IndianRed','DarkMagenta']
+    var color_players = [0, 1]
+    var speler_namen = ["", ""]
+    var speler_aan_zet = 1
+
+    function start_game(){
+        // read player properties
+        speler_namen[0] = document.getElementById("speler_1").value
+        speler_namen[1] = document.getElementById("speler_2").value
+        color_players[0] = colors[color_players[0]]
+        color_players[1] = colors[color_players[1]]
+
+        // remove introductory elements
+        intro_element = document.getElementById("intro")
+        intro_element.remove()
+        
+        // create table
+        get_table()
+
+        // change header
+        verander_beurt()
+    }
+
+    function verander_beurt(){
+        speler_aan_zet = (speler_aan_zet + 1) % 2
+        var text = document.getElementById("instructies")
+        text.innerText = speler_namen[speler_aan_zet] + " is aan de beurt."
+    }
+
+    function change_color(speler_nr){
+        color_nr = color_players[speler_nr - 1]
+        color_nr = (color_nr + 1) % 6
+        color_players[speler_nr - 1] = color_nr
+        var color_button = document.getElementById("kleur_" + speler_nr)
+        color_button.style.backgroundColor = colors[color_nr]
+    }
+
     function get_table(){
+        var div = document.createElement('div');
+        div.innerHTML = document.getElementById('tableHTML').innerHTML;
+        document.getElementById("targetElement").appendChild(div)
+
         table_elements = document.getElementsByTagName('td')
         for(i=0; i<42; i++){
             var row = Math.trunc(i/7)
@@ -41,12 +127,13 @@
             cell.onmouseleave = hovering_leave
             cell.onclick = dropping_stone
         }
-        console.log(table_elements)
     }
+
     function get_cell(row, col){
         const nr = row*7 + col
         return table_elements[nr]
     }
+
     function hovering_enter(){
         for(i=0; i<42; i++){
             cell = table_elements[i]
@@ -55,6 +142,7 @@
             }
         }
     }
+
     function hovering_leave(){
         for(i=0; i<42; i++){
             cell = table_elements[i]
@@ -66,30 +154,62 @@
             }
         }
     }
+
     function dropping_stone(){
         console.log(this.row + "," + this.column)
         const empty_row = 5 - columns[this.column]
         if(empty_row != -1){
             var cell = get_cell(empty_row, this.column)
-            cell.style.background = "yellow"
+            cell.style.background = color_players[speler_aan_zet]
             cell.full = true
             columns[this.column] += 1
+            verander_beurt()
         }
     }
-    function dummy_function(){
-        alert("alert mate")
-    }
 </script>
+
 <body>
-    <table>
-        <tr><td>a</td><td>a</td><td>a</td><td>a</td><td>a</td><td>a</td><td>a</td></tr>
-        <tr><td>a</td><td>a</td><td>a</td><td>a</td><td>a</td><td>a</td><td>a</td></tr>
-        <tr><td>a</td><td>a</td><td>a</td><td>a</td><td>a</td><td>a</td><td>a</td></tr>
-        <tr><td>a</td><td>a</td><td>a</td><td>a</td><td>a</td><td>a</td><td>a</td></tr>
-        <tr><td>a</td><td>a</td><td>a</td><td>a</td><td>a</td><td>a</td><td>a</td></tr>
-        <tr><td>a</td><td>a</td><td>a</td><td>a</td><td>a</td><td>a</td><td>a</td></tr>
-    </table>
-    <button onclick="dummy_function()">klik</button>
+    
+    <h1>Vier op een rij</h1>
+    <hr>
+    <div id="intro" class="container">
+        <h3>Kies je naam en kleur</h3>
+        <div class="left_column">
+            <h5>Naam speler 1</h5>
+            <input id="speler_1">
+            <h6>Kleur</h6>
+            <button onclick="change_color(1)" id="kleur_1">Check color</button>
+        </div>
+        <div class="right_column">
+            <h5>Naam speler 2</h5>
+            <input id="speler_2">
+            <h6>Kleur</h6>
+            <button onclick="change_color(2)" id="kleur_2">Check color</button>
+        </div>
+        <button onclick = "start_game()" class="startbutton">Start game</button>
+    </div>
+
+    <div id="targetElement"></div>
 </body>
-<script>get_table()</script>
+
+
+<script>
+    // initiate initial button colors
+    change_color(1); change_color(2)
+</script>
+
+<script id="tableHTML" type="text/html">
+    <div style="margin:auto">
+        <h3 id="instructies">Speler 1 aan zet!</h3>
+        <table>
+            <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+            <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+            <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+            <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+            <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+            <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        </table>
+    </div>
+</script>
+
 </html>
