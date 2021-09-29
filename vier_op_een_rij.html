@@ -17,7 +17,8 @@
         border-spacing: 5px;
     }
     td{
-        border: 2px solid saddlebrown;
+        border: 3px solid saddlebrown;
+        border-radius: 2em;
         height: 50px;
         width: 75px;
     }
@@ -42,6 +43,10 @@
         display: flex;
         flex-wrap: wrap;
     }
+    h1{
+        font-size: 50px;
+        font-weight: bold;
+    }
     h3{
         font-size: xx-large;
     }
@@ -55,6 +60,7 @@
         height:50px;
         width:250px;
         font-size: large;
+        border: 3px solid black;
     }
     button{
         margin:10px;
@@ -72,7 +78,7 @@
 </style>
 <script>
     var table_elements
-    var columns = [0,0,0,0,0,0,0]
+    var columns_first_empty_cell = [5,5,5,5,5,5,5]
     const colors = ['SlateBlue','SeaGreen','LemonChiffon','LightSalmon','IndianRed','DarkMagenta']
     var color_players = [0, 1]
     var speler_namen = ["", ""]
@@ -80,10 +86,18 @@
 
     function start_game(){
         // read player properties
-        speler_namen[0] = document.getElementById("speler_1").value
-        speler_namen[1] = document.getElementById("speler_2").value
-        color_players[0] = colors[color_players[0]]
-        color_players[1] = colors[color_players[1]]
+        let naam1 = document.getElementById("speler_1").value
+        let naam2 = document.getElementById("speler_2").value
+        let kleur1 = colors[color_players[0]]
+        let kleur2 = colors[color_players[1]]
+        if ( (naam1 == naam2) || (kleur1 == kleur2) ){
+            alert("players must differ.")
+            return
+        } else {
+        
+        // assign values to player arrays
+        speler_namen = [naam1, naam2]
+        color_players = [kleur1, kleur2]
 
         // remove introductory elements
         intro_element = document.getElementById("intro")
@@ -94,15 +108,18 @@
 
         // change header
         verander_beurt()
+        }
     }
 
     function verander_beurt(){
+        // change current player number and update header
         speler_aan_zet = (speler_aan_zet + 1) % 2
         var text = document.getElementById("instructies")
         text.innerText = speler_namen[speler_aan_zet] + " is aan de beurt."
     }
 
     function change_color(speler_nr){
+        // change desired player color
         color_nr = color_players[speler_nr - 1]
         color_nr = (color_nr + 1) % 6
         color_players[speler_nr - 1] = color_nr
@@ -122,7 +139,7 @@
             var cell = table_elements[i]
             cell.row = row
             cell.column = column
-            cell.full = false
+            cell.full = 0
             cell.onmouseenter = hovering_enter
             cell.onmouseleave = hovering_leave
             cell.onclick = dropping_stone
@@ -138,7 +155,13 @@
         for(i=0; i<42; i++){
             cell = table_elements[i]
             if(!cell.full && cell.column == this.column){
+                //highlight column
                 cell.style.background = "lightcyan"
+
+                //highlight where stone would be dropped
+                row_nr = columns_first_empty_cell[this.column]
+                lowest_empty_cell = get_cell(row_nr, this.column)
+                lowest_empty_cell.style.border = "3px solid white"
             }
         }
     }
@@ -146,34 +169,174 @@
     function hovering_leave(){
         for(i=0; i<42; i++){
             cell = table_elements[i]
-            if(!cell.full){
-                cell = table_elements[i]
-                if(!cell.full && cell.column == this.column){
-                    cell.style.background = "none"
-                }
+            if(!cell.full && cell.column == this.column){
+                //de-highlight column
+                cell.style.background = "none"
+                
+                //de-highlight where stone would be dropped
+                row_nr = columns_first_empty_cell[this.column]
+                lowest_empty_cell = get_cell(row_nr, this.column)
+                lowest_empty_cell.style.border = "3px solid SaddleBrown"
             }
         }
     }
 
     function dropping_stone(){
-        console.log(this.row + "," + this.column)
-        const empty_row = 5 - columns[this.column]
+        const empty_row = columns_first_empty_cell[this.column]
+        const current_column = this.column
         if(empty_row != -1){
-            var cell = get_cell(empty_row, this.column)
-            cell.style.background = color_players[speler_aan_zet]
-            cell.full = true
-            columns[this.column] += 1
-            verander_beurt()
+            //animation
+            let id = null
+            var row = 0
+            clearInterval(id)
+            id = setInterval(stoneFrame, 30)
+
+            // animation call function
+            function stoneFrame(){
+                if (row > empty_row) {
+                    // update cell properties
+                    cell = get_cell(empty_row, current_column)
+                    cell.full = speler_aan_zet + 1
+                    columns_first_empty_cell[current_column] -= 1
+                    cell.style.border = "3px solid SaddleBrown"
+
+                    // check winner
+                    outcome = check_winnaar()
+                    if (!outcome) {
+                        verander_beurt()
+                    } else {
+                        end_game()
+                    }
+                    clearInterval(id)
+
+                } else {
+                    // clear previous cell
+                    if (row != 0) {
+                        var prev_cell = get_cell(row - 1, current_column)
+                        prev_cell.style.background = "none"
+                    }
+                    // fill current cell
+                    var cell = get_cell(row, current_column)
+                    cell.style.background = color_players[speler_aan_zet]
+                    row++
+                }
+            }
         }
     }
+
+    function check_winnaar() {
+        // first check rows
+        for (row = 0; row < 6; row++) {
+            // initialize counter
+            var cell = get_cell(row, 0)
+            var teller = [cell.full, 0] // player, #in-a-row
+
+            for (col = 0; col < 7; col++) {
+                outcome = count()
+                if (outcome) {return true}
+            }
+        }
+
+        // then check columns
+        for (col = 0; col < 7; col++) {
+            // initialize counter
+            var cell = get_cell(0, col)
+            var teller = [cell.full, 0] // player, #in-a-row
+
+            for (row = 0; row < 6; row++) {
+                outcome = count()
+                if (outcome) {return true}
+            }
+        }
+
+        // then diagonals from bottom-left to top-right
+        const diag_pairs = [[[3,0], [4,0], [5,0], [5,1], [5,2], [5,3]],  [[3,6], [4,6], [5,6], [5,5], [5,4], [5,3]]]
+        const diag_lengths = [4, 5, 6, 6, 5, 4]
+
+        for (direction = 0; direction < 2; direction++) {
+            var pairs = diag_pairs[direction]
+            for (diag = 0; diag < 6; diag++) {
+                // initialize counter
+                var row_0 = pairs[diag][0]
+                var col_0 = pairs[diag][1]
+
+                var cell = get_cell(row_0, col_0)
+                var teller = [cell.full, 0] // player, #in-a-row
+
+                for (i = 0; i < diag_lengths[diag]; i++) {
+                    // select correct row
+                    row = row_0 - i
+
+                    // and column based on the diagonal direction
+                    if (direction) {
+                        col = col_0 - i
+                    } else {
+                        col = col_0 + i
+                    }
+                    
+                    outcome = count()
+                    if (outcome) {return true}
+                }
+            }
+        }
+
+        // counting function
+        function count() {
+            cell = get_cell(row, col)
+            if (!cell.full) {
+                // cell is empty
+                teller = [0, 0]
+            } else if (cell.full == teller[0]) {
+                // cell is of same color as previous cell
+                teller[1] += 1
+            } else {
+                // cell is of other color as previous cell
+                teller = [cell.full, 1]
+            }
+
+            // if counter is on 4, the winner should be announced
+            if (teller[1] == 4) {
+                var text = document.getElementById("instructies")
+                text.innerText = speler_namen[speler_aan_zet] + " heeft gewonnen!"
+                return true
+            } else {
+                return false
+            }
+        }
+
+        return false
+    }
+/* 
+    function disable_field() {
+        for(i=0; i<42; i++){
+                cell = table_elements[i]
+                cell.onclick = null
+            }
+    }
+
+    function enable_field() {
+        for(i=0; i<42; i++){
+                cell = table_elements[i]
+                cell.onclick = dropping_stone
+            }
+    }
+ */
+    function end_game() {
+        for(i=0; i<42; i++){
+            cell = table_elements[i]
+            cell.onclick = null
+        }
+        document.body.style.backgroundColor = color_players[speler_aan_zet]
+    }
+
 </script>
 
 <body>
     
     <h1>Vier op een rij</h1>
-    <hr>
     <div id="intro" class="container">
         <h3>Kies je naam en kleur</h3>
+        <hr>
         <div class="left_column">
             <h5>Naam speler 1</h5>
             <input id="speler_1">
@@ -199,9 +362,9 @@
 </script>
 
 <script id="tableHTML" type="text/html">
-    <div style="margin:auto">
+    <div id="board" style="margin:auto">
         <h3 id="instructies">Speler 1 aan zet!</h3>
-        <table>
+        <table style="background-color: powderblue; border-radius: 1em">
             <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
             <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
             <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
