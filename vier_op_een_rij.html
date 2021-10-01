@@ -10,11 +10,12 @@
     body{
         background-color: powderblue;
         color:black;
-        padding: 30px;
+        padding: 10px 100px;
+        text-align: center;
     }
     table{
-        border: none;
-        border-spacing: 5px;
+        border: 8px solid slategrey;
+        border-spacing: 10px;
     }
     td{
         border: 3px solid saddlebrown;
@@ -26,8 +27,8 @@
         background-color: lightcyan;
     }
     .container {
-        width: 60%;
-        height: 600px;
+        width: 100%;
+        height: 650px;
         border: 4px solid saddlebrown;
         border-radius: 2em;
         padding: 10px;
@@ -83,6 +84,7 @@
     var color_players = [0, 1]
     var speler_namen = ["", ""]
     var speler_aan_zet = 1
+    var currently_animating = false
 
     function start_game(){
         // read player properties
@@ -182,10 +184,12 @@
     }
 
     function dropping_stone(){
+        if(currently_animating) {return}
         const empty_row = columns_first_empty_cell[this.column]
         const current_column = this.column
         if(empty_row != -1){
             //animation
+            currently_animating = true
             let id = null
             var row = 0
             clearInterval(id)
@@ -200,6 +204,9 @@
                     columns_first_empty_cell[current_column] -= 1
                     cell.style.border = "3px solid SaddleBrown"
 
+                    // save board
+                    saveBoard()
+
                     // check winner
                     outcome = check_winnaar()
                     if (!outcome) {
@@ -207,6 +214,9 @@
                     } else {
                         end_game()
                     }
+                    
+                    // stop animation
+                    currently_animating = false
                     clearInterval(id)
 
                 } else {
@@ -306,29 +316,90 @@
 
         return false
     }
-/* 
-    function disable_field() {
-        for(i=0; i<42; i++){
-                cell = table_elements[i]
-                cell.onclick = null
-            }
-    }
 
-    function enable_field() {
-        for(i=0; i<42; i++){
-                cell = table_elements[i]
-                cell.onclick = dropping_stone
-            }
-    }
- */
     function end_game() {
+        // disable click event of each cell
         for(i=0; i<42; i++){
             cell = table_elements[i]
             cell.onclick = null
         }
         document.body.style.backgroundColor = color_players[speler_aan_zet]
+
+        // remove stored items
+        localStorage.removeItem("board_layout")
+        localStorage.removeItem("column_occupancy")
+        localStorage.removeItem("player_names")
+        localStorage.removeItem("player_colors")
+        localStorage.removeItem("player_turn")
     }
 
+    function saveBoard() {
+        // save current board = all placed stones
+        var board_array = new Array(42).fill(0)
+        for(i = 0; i < 42; i++) {
+            cell = table_elements[i]
+            board_array[i] = parseInt(cell.full)
+        }
+
+        // save board layout, column degree of occupancy, player names, colors and who's turn it is
+        localStorage.setItem("board_layout", board_array)
+        localStorage.setItem("column_occupancy", columns_first_empty_cell)
+        localStorage.setItem("player_names", speler_namen)
+        localStorage.setItem("player_colors", color_players)
+        localStorage.setItem("player_turn", speler_aan_zet)
+    }
+
+    function loadBoard() {
+        if (typeof(localStorage) == "undefined") {
+            alert("Local storage not supported!")
+            return
+        }
+
+        if (localStorage.getItem("player_turn") == null) {
+            alert("No stored game found.")
+            return
+        }
+
+        // load data from local storage
+        var board_array = localStorage.getItem("board_layout")
+        columns_first_empty_cell = localStorage.getItem("column_occupancy")
+        speler_namen = localStorage.getItem("player_names")
+        color_players = localStorage.getItem("player_colors")
+        speler_aan_zet = localStorage.getItem("player_turn")
+
+        // convert string data to appropriate formats
+        board_array = deStringify(board_array)
+        columns_first_empty_cell = deStringify(columns_first_empty_cell)
+        speler_namen = speler_namen.split(",")
+        color_players = color_players.split(",")
+        speler_aan_zet = parseInt(speler_aan_zet)
+
+        function deStringify(string) {
+            array = eval("[" + string + "]")
+            return array
+        }
+
+        // remove introductory elements
+        intro_element = document.getElementById("intro")
+        intro_element.remove()
+
+        // create table
+        get_table()
+
+        // update board
+        for(i = 0; i < 42; i++) {
+            var cell = table_elements[i]
+            cell.full = board_array[i]
+            if(board_array[i] != 0) {
+                cell.style.background = color_players[cell.full - 1]
+            }
+        }
+
+        // change turn twice to update names in header
+        verander_beurt()
+        verander_beurt()
+
+    }
 </script>
 
 <body>
@@ -350,6 +421,8 @@
             <button onclick="change_color(2)" id="kleur_2">Check color</button>
         </div>
         <button onclick = "start_game()" class="startbutton">Start game</button>
+        <br>
+        <button onclick = "loadBoard()">Laad spel</button>
     </div>
 
     <div id="targetElement"></div>
@@ -359,6 +432,10 @@
 <script>
     // initiate initial button colors
     change_color(1); change_color(2)
+
+    // resize window
+    window.resizeTo(1200, 800)
+    window.focus()
 </script>
 
 <script id="tableHTML" type="text/html">
